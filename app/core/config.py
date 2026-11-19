@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     model_api_key: SecretStr | None = None
     model_base_url: str = "https://api.groq.com/openai/v1"
 
+    tavily_api_key: SecretStr | None = None
+    firecrawl_api_key: SecretStr | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
