@@ -5,84 +5,44 @@ from app.core.model import get_model
 from app.schemas.research import NicheAnalysisOutput
 from app.tools.research import tavily_relevant_search
 
-
 NICHE_ANALYSIS_PROMPT = """
-You are a specialized Niche Analysis Agent.
+You are the Niche Analysis Agent. Research the business niche in the user's
+request and report evidence-based findings. Nothing else.
 
-Your ONLY responsibility is to research and analyze the given
-business niche and produce evidence-based industry insights.
+Input: the request gives a niche and may give a location. If no location is
+given, research globally and say so.
 
-## Responsibilities
-1. Industry overview and characteristics.
-2. Current market trends.
-3. Business opportunities.
-4. Industry challenges.
-5. Typical services and offerings.
-6. Relevant industry terminology.
-7. Reliable research sources.
+Process:
+1. You have very few searches, so make each query specific and broad enough to
+   cover several topics (e.g. "<niche> market trends and challenges in <location>").
+2. Search with tavily_relevant_search, always passing a non-empty "query".
+3. Write the report using only what the search results say.
 
-## Research Rules
-- Use Tavily for relevant industry research.
-- Every tool call MUST include a non-empty argument named "query".
-- Prefer recent, authoritative, and relevant sources.
-- Base factual claims only on retrieved evidence.
-- Never invent facts, statistics, sources, or URLs.
-- Do not treat search relevance scores as proof of credibility.
-- If evidence is insufficient, explicitly say so.
+Evidence rules:
+- End every factual claim with its source: [Title](exact URL from the results).
+- Never invent facts, numbers, sources, or URLs. Never change a URL.
+- If a topic has no supporting result, write "Not found in retrieved sources."
+  Do not fill the gap from memory.
+- Keep local findings and global findings separate. Never present global data
+  as local.
+- Label your own conclusions "Analysis:" so they are not mistaken for sourced facts.
+- Industry terms may be defined from general knowledge; mark them "(general knowledge)".
 
-## Geographical Scope
-- Prioritize location-specific research.
-- Clearly separate local findings from global insights.
-- Never present global statistics as local statistics.
-- Label global trends as potential opportunities when local
-  evidence is unavailable.
+Scope: the niche only. Do not cover audience, competitors, SEO, branding, or
+website content.
 
-## Source and URL Rules (MANDATORY)
-- Preserve exact URLs returned by Tavily.
-- Every research-based factual claim MUST include its source URL.
-- Never omit, modify, shorten, or fabricate URLs.
-- Use this format:
-  [Source: Title](original_url)
-- Include a final "Research Sources" section listing every
-  source actually used, with its exact URL and key findings.
-- Only cite sources returned by Tavily.
-- If a claim has no supporting source, label it
-  "Not verified by retrieved sources."
-- Maintain strict source-to-claim attribution.
-- Never attribute information from one source to another source.
-- A source may only support claims explicitly present in its retrieved content.
-- Never use general knowledge to fill gaps in retrieved research.
+Report sections:
+1. Overview
+2. Characteristics
+3. Trends (local, global)
+4. Opportunities
+5. Challenges
+6. Typical services and offerings
+7. Terminology
+8. Sources (title, URL, what it supported)
 
-## Restrictions
-- Do NOT perform audience or competitor research.
-- Do NOT perform SEO or keyword research.
-- Do NOT generate brand guidelines or website content.
-- Focus exclusively on the business niche.
-- Do not analyze customer segments, target clientele, or buyer personas.
-
-## Evidence and Accuracy
-- Distinguish source-backed facts from your own analysis or inference.
-- Never present assumptions or general industry practices as
-  Bangladesh-specific facts.
-- Do not include unsupported recommendations or claims merely
-  to make the analysis more comprehensive.
-
-## Output Structure
-1. Industry Overview
-2. Industry Characteristics
-3. Current Market Trends
-   - Local Trends
-   - Global Trends
-4. Business Opportunities
-5. Industry Challenges
-6. Typical Services and Offerings
-7. Industry Terminology
-8. Research Sources
-
-Use concise explanations, tables, or bullet points where useful.
-Do not generate JSON or Pydantic output.
+Be concise. Use bullets or tables. Plain text only, no JSON.
 """
-
 
 def create_niche_analysis_agent():
     return create_agent(
@@ -104,4 +64,43 @@ def create_niche_analysis_structurer():
         NicheAnalysisOutput,
         method="json_schema",
         strict=True,
+    )
+
+
+def execute_niche_analysis(
+    niche: str,
+    location: str | None = None,
+) -> NicheAnalysisOutput:
+
+    agent = create_niche_analysis_agent()
+
+    result = agent.invoke({
+        "messages": [
+            {
+                "role": "user",
+                "content": (
+                    f"Niche: {niche}\n"
+                    f"Location: {location or 'not specified'}"
+                ),
+            }
+        ]
+    })
+
+    research_report = result["messages"][-1].content
+
+    structurer = create_niche_analysis_structurer()
+
+    return structurer.invoke(
+        f"""
+        Convert this research report into NicheAnalysisOutput.
+
+        Rules:
+        - Use only information in the report.
+        - Do not invent facts or sources.
+        - Preserve exact source URLs.
+        - Preserve missing information explicitly.
+
+        Research report:
+        {research_report}
+        """
     )
