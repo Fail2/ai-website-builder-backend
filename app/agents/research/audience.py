@@ -4,6 +4,7 @@ from langchain.agents.middleware import ToolCallLimitMiddleware
 from app.core.model import get_model
 from app.schemas.research import AudienceResearchOutput
 from app.tools.research import tavily_relevant_search
+from app.agents.utils import create_structurer
 
 AUDIENCE_RESEARCH_PROMPT = """
 You are the Audience Research Agent. Research who the customers of the given
@@ -71,14 +72,6 @@ def create_audience_research_agent():
     )
 
 
-def create_audience_research_structurer():
-    return get_model().with_structured_output(
-        AudienceResearchOutput,
-        method="json_schema",
-        strict=True,
-    )
-
-
 def execute_audience_research(
     niche: str,
     location: str,
@@ -100,7 +93,7 @@ def execute_audience_research(
 
     research_report = result["messages"][-1].content
 
-    structurer = create_audience_research_structurer()
+    structurer = create_structurer(AudienceResearchOutput)
 
     return structurer.invoke(
         f"""\

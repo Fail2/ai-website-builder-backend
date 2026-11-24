@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     model_api_key: SecretStr | None = None
     model_base_url: str = "https://api.groq.com/openai/v1"
 
+    structurer_model_provider: str = "openai"
+    structurer_model_name: str = "openai/gpt-oss-120b"
+    structurer_model_base_url: str | None = "https://api.groq.com/openai/v1"
+    structurer_model_api_key: SecretStr | None = None
+
     tavily_api_key: SecretStr | None = None
     firecrawl_api_key: SecretStr | None = None
 

@@ -45,9 +45,9 @@ def get_tavily_search_tool() -> TavilySearch:
 
     return TavilySearch(
         api_wrapper=api_wrapper,
-        max_results=3,
+        max_results=2,
         topic="general",
-        search_depth="basic",
+        search_depth="advanced",
         include_raw_content=False,
         include_answer=False,
         include_images=False,
@@ -65,7 +65,7 @@ def tavily_relevant_search(query: str) -> str:
     Always provide the query argument when calling this tool.
     Example: {"query": "luxury hotel industry trends in Bangladesh"}
     """
-
+    print("TAVILY CALLED:", query)
     response = get_tavily_search_tool().invoke({
         "query": query,
     })
@@ -123,7 +123,7 @@ def get_firecrawl_scrape_tool() -> FirecrawlScrape:
 @tool
 def firecrawl_article_extract(url: str) -> dict:
     """Scrape a webpage and return its metadata and article content."""
-
+    print("FIRECRAWL CALLED:", url)
     result = get_firecrawl_scrape_tool().invoke({
         "url": url,
     })

@@ -22,7 +22,7 @@ class NicheAnalysisOutput(BaseModel):
     typical_services: list[str] = Field(min_length=1)
     industry_terminology: list[str] = Field(min_length=1)
 
-    sources: list[ResearchSource] = Field(min_length=1)
+    sources: list[ResearchSource] = Field(default_factory=list)
 
 
 class AudienceResearchOutput(BaseModel):

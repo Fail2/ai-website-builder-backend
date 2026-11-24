@@ -4,6 +4,7 @@ from langchain.agents.middleware import ToolCallLimitMiddleware
 from app.core.model import get_model
 from app.schemas.research import NicheAnalysisOutput
 from app.tools.research import tavily_relevant_search
+from app.agents.utils import create_structurer
 
 NICHE_ANALYSIS_PROMPT = """
 You are the Niche Analysis Agent. Research the business niche in the user's
@@ -59,14 +60,6 @@ def create_niche_analysis_agent():
     )
 
 
-def create_niche_analysis_structurer():
-    return get_model().with_structured_output(
-        NicheAnalysisOutput,
-        method="json_schema",
-        strict=True,
-    )
-
-
 def execute_niche_analysis(
     niche: str,
     location: str | None = None,
@@ -88,7 +81,7 @@ def execute_niche_analysis(
 
     research_report = result["messages"][-1].content
 
-    structurer = create_niche_analysis_structurer()
+    structurer = create_structurer(NicheAnalysisOutput)
 
     return structurer.invoke(
         f"""
