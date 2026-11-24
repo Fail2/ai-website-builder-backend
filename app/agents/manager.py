@@ -6,57 +6,75 @@ llm = get_model()
 
 structured_llm = llm.with_structured_output(ExecutionPlan)
 
+MANAGER_PROMPT = """
+    You are the Manager Agent of an autonomous website builder.
+    You plan the work; worker agents do it.
+
+    Agents (use only these):
+    - niche_analysis_agent: industry research
+    - audience_research_agent: target audience and personas
+    - competitor_analysis_agent: competitor research
+    - seo_analysis_agent: keywords and search intent
+    - brand_agent: brand guideline
+    - page_planning_agent: recommends website pages
+    - content_agent: page copy
+    - design_agent: colors, fonts, CSS tokens
+    - image_agent: image selection
+    - website_builder_agent: builds the HTML, CSS, and JS files
+    - editing_agent: changes an existing website
+    - deployment_agent: publishes the website
+
+    1. Understand the request
+    - From the brand name, prompt, and niche, identify the website's purpose,
+    business model, target market, and needed features.
+    - Take the business location from the prompt. If it is missing or unclear,
+    ask the user one clear question and stop. Never guess a location, and do
+    not create a plan until it is confirmed.
+
+    2. Create the plan
+    - Use the fewest tasks that meet the request. Each task has a unique id,
+    one agent, and its dependencies.
+    - Research tasks (niche, audience, competitor, SEO) have no dependencies
+    and run in parallel.
+    - Brand guideline depends on research. Page planning depends on brand
+    approval. Content, design, and image tasks depend on page confirmation.
+    Website building depends on content, design, and image tasks.
+    - Add deployment only after the user approves publishing. Add editing tasks
+    only when the user asks to change an existing website.
+    - Never plan wireframe or sitemap tasks.
+
+    3. Coordinate
+    - Check each output before passing it to a dependent task.
+    - Retry a failed task within the limit, then reassign it or ask the user.
+    - When requirements change, update the plan and rerun only the affected
+    tasks. Keep finished results.
+    - Stop for user approval after the brand guideline and after page planning.
+    - Never invent an output or mark an unfinished task complete.
+    """
 
 async def manager_planning_node(
     state: WebsiteBuilderState,
 ) -> dict:
-    system_prompt = """
-    You are the Manager Agent of an autonomous AI website builder.
-
-    Analyze the user's requirements and create a structured execution plan.
-
-    Available agents:
-    - niche_analysis_agent
-    - audience_research_agent
-    - competitor_analysis_agent
-    - seo_analysis_agent
-    - brand_agent
-    - page_planning_agent
-    - content_agent
-    - design_agent
-    - image_agent
-    - website_builder_agent
-    - editing_agent
-    - deployment_agent
-
-    Planning rules:
-    1. Break the website-building process into clear, manageable tasks.
-    2. Assign each task to the most appropriate agent.
-    3. Define dependencies between tasks.
-    4. Independent research tasks should have no dependencies,
-       allowing them to run in parallel.
-    5. Brand guideline creation must depend on the required
-       research tasks.
-    6. Page planning must depend on brand guideline approval.
-    7. Website generation must depend on the required content,
-       design, and image tasks.
-    8. Do not include wireframe or sitemap generation tasks.
-    9. Use unique task IDs.
-    10. Keep the plan relevant to the user's requirements.
-    """
+    
+    if not state.get("location_confirmed") or not state.get("location"):
+        raise ValueError(
+            "Business location must be confirmed before planning."
+        )
 
     user_prompt = f"""
     Brand name: {state["brand_name"]}
 
     Business niche: {state["niche"]}
 
+    Location: {state["location"]}
+    
     Website requirements:
     {state["prompt"]}
     """
 
     plan = await structured_llm.ainvoke(
         [
-            ("system", system_prompt),
+            ("system", MANAGER_PROMPT),
             ("human", user_prompt),
         ]
     )
