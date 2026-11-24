@@ -9,6 +9,8 @@ class WebsiteBuilderState(TypedDict, total=False):
     brand_name: str
     prompt: str
     niche: str
+    location: str | None
+    location_confirmed: bool
 
     # Manager's planning
     execution_plan: ExecutionPlan
