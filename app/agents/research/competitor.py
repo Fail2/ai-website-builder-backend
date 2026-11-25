@@ -3,58 +3,49 @@ from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from app.core.model import get_model
 from app.agents.utils import create_structurer
-from app.schemas.research import CompetitorAnalysisOutput
+from app.schemas.research import ResearchOutput
 from app.tools.research import (
     tavily_relevant_search,
     firecrawl_article_extract,
 )
 
 COMPETITOR_ANALYSIS_PROMPT = """
-You are a Competitor Analysis Agent. Your task is to identify and
-evaluate competitors in the given business niche and location.
+You are a Competitor Analysis Agent. Research competitors in the given
+business niche and location. Produce a concise, evidence-based report.
 
-### Research Process
-
-1. Use Tavily to find 2–3 relevant competitors.
-2. Prioritize direct competitors operating in the confirmed location.
-3. Exclude the business being created from the results.
+Research process:
+1. Use Tavily to identify 2–3 relevant competitors.
+2. Prioritize direct competitors in the confirmed location.
+3. Exclude the business being created.
 4. Select competitors with verifiable official websites.
-5. Use Firecrawl to inspect each selected competitor's website.
-6. Analyze only information supported by search results or inspected pages.
+5. Use Firecrawl to inspect selected competitors' websites.
+6. Base findings only on retrieved search results and inspected pages.
 
-### Analysis Criteria
-
-For each competitor, examine:
-- Market positioning and services.
-- Website structure and page types.
-- Features and functionality.
-- Content strategy.
+Analyze:
+- Competitor names and exact official website URLs.
+- Market positioning and key services.
+- Notable website structure, features, and content approach.
 - Evidence-based strengths and weaknesses.
+- Opportunities for the new business to differentiate itself.
 
-After analyzing competitors, identify opportunities for the new business
-to differentiate itself.
-
-### Evidence Requirements
-
-- Use exact URLs returned by Tavily or Firecrawl.
-- Base website findings only on pages actually inspected.
-- Distinguish observed facts from your own conclusions using "Analysis:".
+Evidence rules:
+- Preserve exact URLs from Tavily or Firecrawl.
+- Base website observations only on inspected pages.
+- Distinguish conclusions using "Analysis:".
 - Support strengths and weaknesses with specific evidence.
-- Never invent competitors, URLs, features, or findings.
-- If reliable evidence is unavailable, explicitly report the gap.
+- Never invent competitors, URLs, or findings.
+- Explicitly mention important evidence gaps.
 
-### Scope
-
-Focus exclusively on competitor businesses and their websites.
+Scope:
+Focus exclusively on competitors and their websites.
 Do not perform audience research, SEO analysis, or brand development.
 
-### Report Format
-
-1. Competitor profiles (analyze each competitor separately).
-2. Differentiation opportunities.
-3. Research sources (title, exact URL, and supported findings).
-
-Keep the report concise and evidence-based.
+Output:
+- Plain text, not JSON.
+- Maximum 1000 characters.
+- Prioritize specific competitor names, URLs, findings, and
+  differentiation opportunities.
+- Avoid generic observations and unnecessary descriptions.
 """
 
 
@@ -85,7 +76,7 @@ def execute_competitor_analysis(
     niche: str,
     location: str,
     brand_name: str,
-) -> CompetitorAnalysisOutput:
+) -> ResearchOutput:
     agent = create_competitor_analysis_agent()
 
     response = agent.invoke({
@@ -104,19 +95,27 @@ def execute_competitor_analysis(
         ]
     })
 
-    report = response["messages"][-1].content
+    research_report = response["messages"][-1].content
 
-    structurer = create_structurer(CompetitorAnalysisOutput)
+    structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
         f"""
-        Convert the following competitor research report into the
-        required structured output.
+        Convert the research report into ResearchOutput.
 
-        Do not invent missing information.
-        Preserve exact competitor names and source URLs.
+        Rules:
+        - Produce one descriptive competitor analysis report.
+        - Maximum 1000 characters.
+        - Preserve specific competitor names and exact URLs.
+        - Summarize competitors' market positioning and key offerings.
+        - Identify notable website features and content approaches.
+        - Highlight competitor strengths and weaknesses where supported.
+        - Include useful differentiation opportunities for the user's business.
+        - Clearly distinguish sourced facts from analysis.
+        - Do not invent or distort information.
+        - Prioritize specific, useful findings over generic observations.
 
         Research report:
-        {report}
+        {research_report}
         """
     )
