@@ -1,7 +1,9 @@
 from datetime import datetime
 from uuid import UUID
-from app.core.enums import ProjectStatus
+
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.core.enums import ProjectStatus
 
 
 class ProjectCreate(BaseModel):
@@ -16,6 +18,8 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     brand_name: str
     prompt: str
