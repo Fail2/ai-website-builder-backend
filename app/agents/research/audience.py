@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from app.core.model import get_model
-from app.schemas.research import AudienceResearchOutput
+from app.schemas.research import ResearchOutput
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
 
@@ -43,6 +43,10 @@ Persona rules:
  
 Scope: the audience only. Do not cover niche trends, competitors, SEO,
 branding, or website content.
+
+Report length:
+- Keep the complete report within 1000 characters.
+- Prioritize evidence-backed findings when space is limited.
  
 Report sections:
 1. Primary segments (who buys, who decides)
@@ -75,7 +79,7 @@ def create_audience_research_agent():
 def execute_audience_research(
     niche: str,
     location: str,
-) -> AudienceResearchOutput:
+) -> ResearchOutput:
 
     agent = create_audience_research_agent()
 
@@ -93,17 +97,22 @@ def execute_audience_research(
 
     research_report = result["messages"][-1].content
 
-    structurer = create_structurer(AudienceResearchOutput)
+    structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
-        f"""\
-        Convert this audience research report into AudienceResearchOutput.
+        f"""
+        Convert the audience research report into ResearchOutput.
 
         Rules:
-        - Use only information in the report.
-        - Do not invent facts or sources.
-        - Preserve exact source URLs.
-        - Preserve missing information explicitly.
+        - Produce one descriptive audience research report.
+        - Maximum 1000 characters.
+        - Preserve the most important audience segments,
+        needs, pain points, and buying behavior.
+        - Include evidence-based personas when available.
+        - Preserve important supporting findings and exact URLs.
+        - Clearly distinguish sourced facts from analysis and inference.
+        - Do not invent or distort information.
+        - Prioritize useful audience insights over generic observations.
 
         Research report:
         {research_report}
