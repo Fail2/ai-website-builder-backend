@@ -13,6 +13,8 @@ from app.graph.nodes.research import (
 )
 from app.graph.nodes.validation import research_validation_node
 from app.agents.manager import manager_planning_node
+from app.graph.nodes.approval import brand_guideline_approval_node
+from app.graph.routers.brand import route_brand_approval
 
 
 builder = StateGraph(WebsiteBuilderState)
@@ -26,6 +28,7 @@ builder.add_node("competitor_analysis", competitor_analysis_node)
 builder.add_node("seo_analysis", seo_analysis_node)
 builder.add_node("research_validation", research_validation_node)
 builder.add_node("brand_guideline", brand_guideline_node)
+builder.add_node("brand_guideline_approval",brand_guideline_approval_node)
 
 # Initial flow
 builder.add_edge(START, "location_clarification")
@@ -48,7 +51,19 @@ builder.add_edge(
 )
 
 builder.add_edge("research_validation", "brand_guideline")
-builder.add_edge("brand_guideline", END)
+builder.add_edge(
+    "brand_guideline",
+    "brand_guideline_approval",
+)
+
+builder.add_conditional_edges(
+    "brand_guideline_approval",
+    route_brand_approval,
+    {
+        "brand_guideline": "brand_guideline",
+        "end": END,
+    },
+)
 
 # Temporary in-memory checkpointer for development
 checkpointer = MemorySaver()

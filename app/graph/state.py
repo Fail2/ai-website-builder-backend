@@ -20,7 +20,8 @@ class WebsiteBuilderState(TypedDict, total=False):
     agent_outputs: Annotated[dict[str, Any], operator.or_]
 
     # Brand guideline status
-    brand_guideline_status: Literal["pending", "approved"]
+    brand_guideline_status: Literal["pending", "approved", "revision_requested",]
+    brand_guideline_feedback: str
 
     # Workflow tracking
     current_stage: str

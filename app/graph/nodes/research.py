@@ -47,6 +47,7 @@ def seo_analysis_node(state: WebsiteBuilderState) -> dict:
     result = execute_seo_analysis(
         niche=state["niche"],
         location=state["location"],
+        brand_name=state["brand_name"]
     )
     return {
         "agent_outputs": {
@@ -56,6 +57,19 @@ def seo_analysis_node(state: WebsiteBuilderState) -> dict:
 
 def brand_guideline_node(state: WebsiteBuilderState) -> dict:
     agent_outputs = state["agent_outputs"]
+
+    required_reports = [
+        "niche_analysis",
+        "audience_research",
+        "competitor_analysis",
+        "seo_analysis",
+    ]
+
+    if not all(
+        key in agent_outputs and agent_outputs[key].get("report")
+        for key in required_reports
+    ):
+        raise ValueError("Required research reports are missing.")
 
     research_context = {
         "niche_analysis": agent_outputs["niche_analysis"]["report"],
@@ -70,12 +84,15 @@ def brand_guideline_node(state: WebsiteBuilderState) -> dict:
         location=state["location"],
         user_requirements=state["prompt"],
         research_context=research_context,
+        previous_guideline=agent_outputs.get("brand_guideline"),
+        feedback=state.get("brand_guideline_feedback"),
     )
 
     return {
         "agent_outputs": {
             "brand_guideline": result.model_dump()
         },
-        "brand-guideline_status": "pending",
+        "brand_guideline_status": "pending",
+        "brand_guideline_feedback": "",
         "current_stage": "brand_guideline_review",
     }
