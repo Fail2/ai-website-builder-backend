@@ -1,8 +1,12 @@
 import pytest
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
 from pydantic import ValidationError
 
 from app.graph.nodes import location as location_nodes
 from app.graph.routers.location import route_location
+from app.graph.state import WebsiteBuilderState
 from app.schemas.location import LocationExtraction
 
 
@@ -135,15 +139,48 @@ def test_clarification_trims_user_location(monkeypatch):
     assert result["location_confirmed"] is True
 
 
-def test_clarification_rejects_blank_user_location(monkeypatch):
+def test_clarification_retries_blank_user_location(monkeypatch):
+    payloads = []
+
+    def interrupt_with_responses(payload):
+        payloads.append(payload)
+        return "   " if len(payloads) == 1 else "Dhaka, Bangladesh"
+
     monkeypatch.setattr(
         location_nodes,
         "interrupt",
-        lambda _payload: "   ",
+        interrupt_with_responses,
     )
 
-    with pytest.raises(ValueError, match="valid business location is required"):
-        location_nodes.location_clarification_node({})
+    result = location_nodes.location_clarification_node({})
+
+    assert result["location"] == "Dhaka, Bangladesh"
+    assert result["location_confirmed"] is True
+    assert "message" not in payloads[0]
+    assert "message" in payloads[1]
+
+
+def test_graph_reprompts_after_blank_location_answer():
+    builder = StateGraph(WebsiteBuilderState)
+    builder.add_node(
+        "location_clarification",
+        location_nodes.location_clarification_node,
+    )
+    builder.add_edge(START, "location_clarification")
+    builder.add_edge("location_clarification", END)
+    graph = builder.compile(checkpointer=MemorySaver())
+    config = {"configurable": {"thread_id": "location-clarification-retry"}}
+
+    initial = graph.invoke({}, config)
+    assert initial["__interrupt__"][0].value["type"] == "location_clarification"
+
+    after_blank = graph.invoke(Command(resume="   "), config)
+    assert after_blank["__interrupt__"][0].value["type"] == "location_clarification"
+    assert "message" in after_blank["__interrupt__"][0].value
+
+    completed = graph.invoke(Command(resume="Dhaka, Bangladesh"), config)
+    assert completed["location"] == "Dhaka, Bangladesh"
+    assert completed["location_confirmed"] is True
 
 
 def test_location_extraction_rejects_extra_schema_fields():

@@ -71,13 +71,19 @@ def location_extraction_node(
 def location_clarification_node(
     state: WebsiteBuilderState,
 ) -> dict[str, str | bool]:
-    user_location = interrupt({
-        "type": "location_clarification",
-        "question": "Which city and country is this business located in?",
-    })
+    retry = False
+    while True:
+        payload = {
+            "type": "location_clarification",
+            "question": "Which city and country is this business located in?",
+        }
+        if retry:
+            payload["message"] = "Please enter a non-empty business location."
 
-    if not isinstance(user_location, str) or not user_location.strip():
-        raise ValueError("A valid business location is required.")
+        user_location = interrupt(payload)
+        if isinstance(user_location, str) and user_location.strip():
+            break
+        retry = True
 
     return {
         "location": user_location.strip(),
