@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from app.core.model import get_model
-from app.schemas.research import NicheAnalysisOutput
+from app.schemas.research import ResearchOutput
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
 
@@ -63,7 +63,7 @@ def create_niche_analysis_agent():
 def execute_niche_analysis(
     niche: str,
     location: str | None = None,
-) -> NicheAnalysisOutput:
+) -> ResearchOutput:
 
     agent = create_niche_analysis_agent()
 
@@ -81,17 +81,23 @@ def execute_niche_analysis(
 
     research_report = result["messages"][-1].content
 
-    structurer = create_structurer(NicheAnalysisOutput)
+    structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
         f"""
-        Convert this research report into NicheAnalysisOutput.
+        Convert the research report into ResearchOutput.
 
         Rules:
-        - Use only information in the report.
-        - Do not invent facts or sources.
-        - Preserve exact source URLs.
-        - Preserve missing information explicitly.
+        - Produce one descriptive research report.
+        - Maximum 1000 characters.
+        - Preserve the most important research findings.
+        - Include relevant industry trends, opportunities,
+        challenges, and typical services.
+        - Preserve important industry terminology.
+        - Include source titles and exact URLs where possible.
+        - Clearly distinguish sourced facts from analysis.
+        - Do not invent or distort information.
+        - Prioritize useful information over less relevant details.
 
         Research report:
         {research_report}
