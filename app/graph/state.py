@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from typing_extensions import TypedDict
 import operator
 from app.schemas.execution_plan import ExecutionPlan
@@ -18,6 +18,9 @@ class WebsiteBuilderState(TypedDict, total=False):
 
     # Worker agent results
     agent_outputs: Annotated[dict[str, Any], operator.or_]
+
+    # Brand guideline status
+    brand_guideline_status: Literal["pending", "approved"]
 
     # Workflow tracking
     current_stage: str
