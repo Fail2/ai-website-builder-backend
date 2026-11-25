@@ -4,7 +4,7 @@ from langchain.agents.middleware import ToolCallLimitMiddleware
 from app.core.model import get_model
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
-from app.schemas.research import SEOAnalysisOutput
+from app.schemas.research import ResearchOutput
 
 SEO_ANALYSIS_PROMPT = """
 You are the SEO Analysis Agent. Research how people search for the given
@@ -86,7 +86,7 @@ def execute_seo_analysis(
     niche: str,
     location: str,
     brand_name: str,
-) -> SEOAnalysisOutput:
+) -> ResearchOutput:
     agent = create_seo_analysis_agent()
 
     response = agent.invoke({
@@ -109,17 +109,23 @@ def execute_seo_analysis(
 
     report = response["messages"][-1].content
 
-    structurer = create_structurer(SEOAnalysisOutput)
+    structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
         f"""
-        Convert the following SEO research report into the required
-        structured output.
+        Convert the SEO research report into ResearchOutput.
 
-        Preserve the distinction between observed and candidate keywords.
-        Mark unverified candidate keywords clearly.
-        Do not invent search metrics, findings, or source URLs.
-        Preserve exact source URLs.
+        Rules:
+        - Produce one descriptive SEO research report.
+        - Keep the report within 1000 characters.
+        - Preserve observed and candidate keyword distinctions.
+        - Clearly mark unverified candidate keywords.
+        - Preserve important keywords and their search intent.
+        - Include useful landing page and content topic recommendations.
+        - Preserve important SEO strategy findings.
+        - Preserve exact source titles and URLs.
+        - Do not invent or distort findings, metrics, or sources.
+        - Prioritize evidence-based findings over generic recommendations.
 
         Research report:
         {report}
