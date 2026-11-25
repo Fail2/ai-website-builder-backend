@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     structurer_model_base_url: str | None = "https://api.groq.com/openai/v1"
     structurer_model_api_key: SecretStr | None = None
 
+    brand_model_provider: str = "openai"
+    brand_model_name: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    brand_model_base_url: str = "https://openrouter.ai/api/v1"
+    brand_model_api_key: SecretStr | None = None
+
     tavily_api_key: SecretStr | None = None
     firecrawl_api_key: SecretStr | None = None
 
