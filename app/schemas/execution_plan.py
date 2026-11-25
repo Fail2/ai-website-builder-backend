@@ -12,13 +12,10 @@ class TaskPlan(BaseModel):
         "competitor_analysis_agent",
         "seo_analysis_agent",
         "brand_agent",
-        "page_planning_agent",
+        "wireframe_agent",
         "content_agent",
         "design_agent",
-        "image_agent",
         "website_builder_agent",
-        "editing_agent",
-        "deployment_agent",
     ]
     dependencies: list[str] = Field(default_factory=list)
     status: Literal[

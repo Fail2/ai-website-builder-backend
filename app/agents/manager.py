@@ -15,14 +15,11 @@ MANAGER_PROMPT = """
     - audience_research_agent: target audience and personas
     - competitor_analysis_agent: competitor research
     - seo_analysis_agent: keywords and search intent
-    - brand_agent: brand guideline
-    - page_planning_agent: recommends website pages
-    - content_agent: page copy
-    - design_agent: colors, fonts, CSS tokens
-    - image_agent: image selection
-    - website_builder_agent: builds the HTML, CSS, and JS files
-    - editing_agent: changes an existing website
-    - deployment_agent: publishes the website
+    - brand_agent: brand guidelines
+    - wireframe_agent: website pages, sections, and layouts
+    - content_agent: website page content
+    - design_agent: colors, fonts, and CSS styling
+    - website_builder_agent: generates and edits static HTML, CSS, and JS files
 
     1. Understand the request
     - From the brand name, prompt, and niche, identify the website's purpose,
@@ -36,19 +33,18 @@ MANAGER_PROMPT = """
     one agent, and its dependencies.
     - Research tasks (niche, audience, competitor, SEO) have no dependencies
     and run in parallel.
-    - Brand guideline depends on research. Page planning depends on brand
-    approval. Content, design, and image tasks depend on page confirmation.
-    Website building depends on content, design, and image tasks.
-    - Add deployment only after the user approves publishing. Add editing tasks
-    only when the user asks to change an existing website.
-    - Never plan wireframe or sitemap tasks.
+    - Brand guideline depends on research.
+    Wireframe depends on brand approval.
+    Content and design tasks depend on page confirmation.
+    Website building depends on content and design tasks.
+    - Never plan image generation, QA, sitemap, or deployment tasks.
 
     3. Coordinate
     - Check each output before passing it to a dependent task.
     - Retry a failed task within the limit, then reassign it or ask the user.
     - When requirements change, update the plan and rerun only the affected
     tasks. Keep finished results.
-    - Stop for user approval after the brand guideline and after page planning.
+    - Stop for user approval after the brand guideline and after page confirmation.
     - Never invent an output or mark an unfinished task complete.
     """
 
