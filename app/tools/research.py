@@ -123,24 +123,50 @@ def get_firecrawl_scrape_tool() -> FirecrawlScrape:
 @tool
 def firecrawl_article_extract(url: str) -> dict:
     """Scrape a webpage and return its metadata and article content."""
+
     print("FIRECRAWL CALLED:", url)
+
     result = get_firecrawl_scrape_tool().invoke({
         "url": url,
     })
 
-    metadata = result.get("metadata", {})
-    markdown = result.get("markdown", "")
+    # Normalize Firecrawl response
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except json.JSONDecodeError:
+            return {
+                "title": "",
+                "description": "",
+                "url": url,
+                "content": result[:4000],
+            }
 
-    # Locate the article title in the extracted Markdown.
-    title = metadata.get("title", "")
-    title_index = markdown.find(title)
+    if not isinstance(result, dict):
+        raise TypeError(
+            f"Unexpected Firecrawl response type: {type(result).__name__}"
+        )
 
-    if title_index != -1:
-        markdown = markdown[title_index:]
+    metadata = result.get("metadata") or {}
+    markdown = result.get("markdown") or ""
+
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    if not isinstance(markdown, str):
+        markdown = str(markdown)
+
+    title = metadata.get("title") or ""
+
+    if title:
+        title_index = markdown.find(title)
+
+        if title_index != -1:
+            markdown = markdown[title_index:]
 
     return {
         "title": title,
         "description": metadata.get("description", ""),
-        "url": metadata.get("url", url),
+        "url": metadata.get("url") or url,
         "content": markdown[:4000],
     }
