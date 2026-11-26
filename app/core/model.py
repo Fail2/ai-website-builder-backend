@@ -16,6 +16,7 @@ def get_model():
         api_key=settings.model_api_key.get_secret_value(),
         base_url=settings.model_base_url,
         temperature=0,
+        max_retries=5,
     )
 
 @lru_cache(maxsize=1)

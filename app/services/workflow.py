@@ -35,7 +35,8 @@ async def run_website_workflow(
             config={
                 "configurable": {
                     "thread_id": str(project_id),
-                }
+                },
+                "max_concurrency": 2,
             },
         )
 
