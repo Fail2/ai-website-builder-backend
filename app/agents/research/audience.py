@@ -1,10 +1,16 @@
+from functools import lru_cache
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
-from app.core.model import get_model
+from app.core.model import create_model
+from app.core.config import settings
 from app.schemas.research import ResearchOutput
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
+
+@lru_cache(maxsize=1)
+def get_audience_model():
+    return create_model(settings.research_model_name, settings.audience_model_api_key)
 
 AUDIENCE_RESEARCH_PROMPT = """
 You are the Audience Research Agent. Research who the customers of the given
@@ -63,7 +69,7 @@ Be concise. Use bullets or tables. Plain text only, no JSON.
 
 def create_audience_research_agent():
     return create_agent(
-        model=get_model(),
+        model=get_audience_model(),
         tools=[tavily_relevant_search],
         system_prompt=AUDIENCE_RESEARCH_PROMPT,
         middleware=[
@@ -96,7 +102,7 @@ def execute_audience_research(
     })
 
     research_report = result["messages"][-1].content
-
+    
     structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(

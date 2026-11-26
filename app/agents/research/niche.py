@@ -1,10 +1,16 @@
+from functools import lru_cache
+from app.core.config import settings
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
-from app.core.model import get_model
+from app.core.model import create_model
 from app.schemas.research import ResearchOutput
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
+
+@lru_cache(maxsize=1)
+def get_niche_model():
+    return create_model(settings.research_model_name, settings.niche_model_api_key)
 
 NICHE_ANALYSIS_PROMPT = """
 You are the Niche Analysis Agent. Research the business niche in the user's
@@ -47,7 +53,7 @@ Be concise. Use bullets or tables. Plain text only, no JSON.
 
 def create_niche_analysis_agent():
     return create_agent(
-        model=get_model(),
+        model=get_niche_model(),
         tools=[tavily_relevant_search],
         system_prompt=NICHE_ANALYSIS_PROMPT,
         middleware=[
@@ -80,7 +86,7 @@ def execute_niche_analysis(
     })
 
     research_report = result["messages"][-1].content
-
+    
     structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(

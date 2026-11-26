@@ -1,10 +1,16 @@
+from functools import lru_cache
+from app.core.config import settings
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
-from app.core.model import get_model
+from app.core.model import create_model
 from app.tools.research import tavily_relevant_search
 from app.agents.utils import create_structurer
 from app.schemas.research import ResearchOutput
+
+@lru_cache(maxsize=1)
+def get_seo_model():
+    return create_model(settings.research_model_name, settings.seo_model_api_key)
 
 SEO_ANALYSIS_PROMPT = """
 You are the SEO Analysis Agent. Research how people search for the given
@@ -69,7 +75,7 @@ Be concise. Plain text only, no JSON.
 
 def create_seo_analysis_agent():
     return create_agent(
-        model=get_model(),
+        model=get_seo_model(),
         tools=[tavily_relevant_search],
         system_prompt=SEO_ANALYSIS_PROMPT,
         middleware=[
@@ -107,8 +113,8 @@ def execute_seo_analysis(
         ]
     })
 
-    report = response["messages"][-1].content
-
+    research_report = response["messages"][-1].content
+    
     structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
@@ -128,6 +134,6 @@ def execute_seo_analysis(
         - Prioritize evidence-based findings over generic recommendations.
 
         Research report:
-        {report}
+        {research_report}
         """
     )

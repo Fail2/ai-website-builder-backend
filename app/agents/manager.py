@@ -1,10 +1,14 @@
-from app.core.model import get_model
+from functools import lru_cache
+
+from app.core.model import create_model
 from app.graph.state import WebsiteBuilderState
 from app.schemas.execution_plan import ExecutionPlan
+from app.core.config import settings
 
-llm = get_model()
-
-structured_llm = llm.with_structured_output(ExecutionPlan)
+@lru_cache(maxsize=1)
+def get_planner():
+    """Build the planner lazily so importing this module never needs an API key."""
+    return create_model(settings.manager_model_name, settings.manager_model_api_key).with_structured_output(ExecutionPlan)
 
 MANAGER_PROMPT = """
     You are the Manager Agent of an autonomous website builder.
@@ -68,7 +72,7 @@ async def manager_planning_node(
     {state["prompt"]}
     """
 
-    plan = await structured_llm.ainvoke(
+    plan = await get_planner().ainvoke(
         [
             ("system", MANAGER_PROMPT),
             ("human", user_prompt),

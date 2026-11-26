@@ -1,13 +1,20 @@
+from functools import lru_cache
+
+from app.core.config import settings
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
 
-from app.core.model import get_model
+from app.core.model import create_model
 from app.agents.utils import create_structurer
 from app.schemas.research import ResearchOutput
 from app.tools.research import (
     tavily_relevant_search,
     firecrawl_article_extract,
 )
+
+@lru_cache(maxsize=1)
+def get_competitor_model():
+    return create_model(settings.research_model_name, settings.competitor_model_api_key)
 
 COMPETITOR_ANALYSIS_PROMPT = """
 You are a Competitor Analysis Agent. Research competitors in the given
@@ -51,7 +58,7 @@ Output:
 
 def create_competitor_analysis_agent():
     return create_agent(
-        model=get_model(),
+        model=get_competitor_model(),
         tools=[
             tavily_relevant_search,
             firecrawl_article_extract,
@@ -96,7 +103,7 @@ def execute_competitor_analysis(
     })
 
     research_report = response["messages"][-1].content
-
+    
     structurer = create_structurer(ResearchOutput)
 
     return structurer.invoke(
