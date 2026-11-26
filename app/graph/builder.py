@@ -78,9 +78,5 @@ builder.add_conditional_edges(
     },
 )
 
-# Temporary in-memory checkpointer for development
-checkpointer = MemorySaver()
-
-website_builder_graph = builder.compile(
-    checkpointer=checkpointer
-)
+def compile_website_builder_graph(checkpointer):
+    return builder.compile(checkpointer=checkpointer)
