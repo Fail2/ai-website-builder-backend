@@ -75,6 +75,7 @@ async def _stream_graph(graph, project_id: UUID, input_value) -> None:
             )
         return
 
+    await update_project_status(project_id, ProjectStatus.PLANNING_PAGES)
     await event_hub.publish(project_id, {"type": "completed"})
 
 
