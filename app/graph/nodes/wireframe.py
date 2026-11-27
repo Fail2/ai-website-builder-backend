@@ -1,3 +1,5 @@
+from langgraph.types import interrupt
+
 from app.agents.wireframe import execute_wireframe
 from app.graph.state import WebsiteBuilderState
 
@@ -17,6 +19,10 @@ def wireframe_node(state: WebsiteBuilderState) -> dict:
     if state.get("brand_guideline_status") != "approved":
         raise ValueError("Brand guideline must be approved before wireframe generation.")
 
+    location = state.get("location")
+    if not isinstance(location, str) or not location.strip():
+        raise ValueError("A confirmed business location is required for wireframe generation.")
+
     research_context = {
         key: outputs[key]["report"]
         for key in required
@@ -25,7 +31,7 @@ def wireframe_node(state: WebsiteBuilderState) -> dict:
     result = execute_wireframe(
         brand_name=state["brand_name"],
         niche=state["niche"],
-        location=state["location"],
+        location=location.strip(),
         user_requirements=state["prompt"],
         research_context=research_context,
         approved_brand_guideline=outputs["brand_guideline"],
@@ -41,8 +47,6 @@ def wireframe_node(state: WebsiteBuilderState) -> dict:
 
 
 def wireframe_approval_node(state: WebsiteBuilderState) -> dict:
-    from langgraph.types import interrupt
-
     decision = interrupt({
         "type": "wireframe_review",
         "wireframe": state["agent_outputs"]["wireframe"],
