@@ -6,6 +6,7 @@ from sqlalchemy.engine import make_url
 
 from app.api.routes.projects import router as projects_router
 from app.api.routes.wireframes import router as wireframes_router
+from app.api.routes.brand_guidelines import router as brand_guidelines_router
 from app.api.routes.workflow import router as workflow_router
 from app.core.config import settings
 from app.graph.builder import compile_website_builder_graph
@@ -36,6 +37,7 @@ app = FastAPI(
 app.include_router(projects_router)
 app.include_router(workflow_router)
 app.include_router(wireframes_router)
+app.include_router(brand_guidelines_router)
 
 
 @app.get("/health")
