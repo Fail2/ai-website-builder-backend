@@ -11,6 +11,7 @@ def niche_analysis_node(state: WebsiteBuilderState) -> dict:
         niche=state["niche"],
         location=state.get("location"),
     )
+    print("niche result",result)
     return {
         "agent_outputs": {
             "niche_analysis": result.model_dump()
@@ -23,6 +24,7 @@ def audience_research_node(state: WebsiteBuilderState) -> dict:
         niche=state["niche"],
         location=state["location"],
     )
+    print("audience result",result)
     return {
         "agent_outputs": {
             "audience_research": result.model_dump()
@@ -36,6 +38,7 @@ def competitor_analysis_node(state: WebsiteBuilderState) -> dict:
         location=state["location"],
         brand_name=state["brand_name"],
     )
+    print("competitor result",result)
     return {
         "agent_outputs": {
             "competitor_analysis": result.model_dump()
@@ -49,6 +52,7 @@ def seo_analysis_node(state: WebsiteBuilderState) -> dict:
         location=state["location"],
         brand_name=state["brand_name"]
     )
+    print("seo result",result)
     return {
         "agent_outputs": {
             "seo_analysis": result.model_dump()
@@ -88,6 +92,7 @@ def brand_guideline_node(state: WebsiteBuilderState) -> dict:
         feedback=state.get("brand_guideline_feedback"),
     )
 
+    print("brand result",result)
     return {
         "agent_outputs": {
             "brand_guideline": result.model_dump()

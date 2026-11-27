@@ -8,8 +8,7 @@ def test_execute_niche_analysis():
     )
 
     assert result is not None
-    assert result.niche
-    assert result.industry_overview
-    assert isinstance(result.sources, list)
+    assert isinstance(result.report, str)
+    assert result.report.strip()
 
     print(result.model_dump_json(indent=2))

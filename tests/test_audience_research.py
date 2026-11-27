@@ -10,13 +10,8 @@ def test_execute_audience_research():
     )
 
     assert result is not None
-    assert result.primary_audiences
-    assert result.customer_needs
-    assert result.pain_points
-    assert result.motivations
-    assert result.purchasing_behavior
-    assert result.audience_personas
-    assert isinstance(result.sources, list)
+    assert isinstance(result.report, str)
+    assert result.report.strip()
 
     print("\nAudience Research Output:\n")
     print(result.model_dump_json(indent=2))
