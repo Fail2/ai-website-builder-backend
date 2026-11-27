@@ -12,3 +12,7 @@ class LocationExtraction(BaseModel):
         default=None,
         description="Exact prompt substring that identifies the business location."
     )
+
+
+class LocationResumeRequest(BaseModel):
+    location: str = Field(min_length=2, max_length=200)

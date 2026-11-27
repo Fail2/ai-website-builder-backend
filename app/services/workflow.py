@@ -1,6 +1,8 @@
 from uuid import UUID
 
 from sqlalchemy import select
+from langgraph.types import Command
+
 from app.services.event_hub import event_hub
 from app.core.enums import ProjectStatus
 from app.database.session import AsyncSessionLocal
@@ -74,3 +76,45 @@ async def run_website_workflow(graph, project_id, initial_state):
             },
         )
         raise
+
+
+async def resume_website_workflow(graph, project_id, location: str,):
+    config = {
+        "configurable": {
+            "thread_id": str(project_id),
+        },
+        "max_concurrency": 2,
+    }
+
+    async for chunk in graph.astream(
+        Command(resume=location),
+        config=config,
+        stream_mode="updates",
+    ):
+        interrupts = chunk.get("__interrupt__")
+
+        if interrupts:
+            for item in interrupts:
+                await event_hub.publish(
+                    project_id,
+                    {
+                        "type": "interrupt",
+                        "data": item.value,
+                    },
+                )
+            return
+
+        for node_name, update in chunk.items():
+            await event_hub.publish(
+                project_id,
+                {
+                    "type": "node_update",
+                    "node": node_name,
+                    "data": update,
+                },
+            )
+
+    await event_hub.publish(
+        project_id,
+        {"type": "completed"},
+    )
