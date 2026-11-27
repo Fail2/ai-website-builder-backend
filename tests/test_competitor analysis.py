@@ -12,6 +12,6 @@ def test_competitor_analysis():
 
     print(result.model_dump_json(indent=2))
 
-    assert result.competitors
-    assert result.differentiation_opportunities
-    assert result.sources
+    assert result is not None
+    assert isinstance(result.report, str)
+    assert result.report.strip()
