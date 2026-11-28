@@ -19,11 +19,14 @@ class Settings(BaseSettings):
     brand_model_name: str = "openrouter:nvidia/nemotron-3-ultra-550b-a55b:free"
     brand_model_api_key: SecretStr | None = None
 
-    research_model_name: str = "google_genai:gemini-4-hydrogen"
+    research_model_name: str = "google_genai:gemini-3.5-flash-lite"
     seo_model_api_key: SecretStr | None = None
     niche_model_api_key: SecretStr | None = None
     audience_model_api_key: SecretStr | None = None
     competitor_model_api_key: SecretStr | None = None
+
+    wireframe_model_name: str = "groq:openai/gpt-oss-120b"
+    wireframe_model_api_key: SecretStr | None = None
 
     tavily_api_key: SecretStr | None = None
     firecrawl_api_key: SecretStr | None = None
