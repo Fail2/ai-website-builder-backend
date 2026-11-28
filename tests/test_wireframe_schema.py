@@ -12,25 +12,27 @@ from app.schemas.wireframe import (
 
 def make_page(slug="home"):
     return PageWireframe(
-        page_name="Home",
+        page_name=slug.replace("-", " ").title(),
         page_slug=slug,
         page_purpose="Introduce the business and convert relevant visitors.",
-        audience_need="Understand the services and decide whether to contact the business.",
+        audience_need="Understand the services and decide whether to get in touch.",
         seo_focus=["business services"],
         sections=[
             WireframeSection(
-                section_id="hero",
-                title="Hero",
+                section_id=section_id,
+                title=section_id.title(),
                 purpose="Communicate the main value proposition.",
-                layout_description="A two-column layout with text and supporting visual.",
+                layout_description="Two columns with text and an image.",
                 content_requirements=["Headline", "Supporting summary"],
                 recommended_components=["Heading", "Button", "Image"],
             )
+            for section_id in ("hero", "services", "contact")
         ],
         primary_cta=CallToAction(
             label="Contact us",
             action="Open the contact form.",
         ),
+        secondary_cta=None,
     )
 
 
@@ -41,6 +43,8 @@ def test_wireframe_requires_homepage():
             navigation=[NavigationItem(label="Services", page_slug="services")],
             pages=[
                 make_page("services"),
+                make_page("contact"),
+                make_page("about"),
             ],
             global_functional_requirements=["Responsive navigation"],
         )
@@ -51,7 +55,7 @@ def test_wireframe_rejects_duplicate_page_slugs():
         WireframeOutput(
             website_goal="Generate qualified enquiries for the business.",
             navigation=[NavigationItem(label="Home", page_slug="home")],
-            pages=[make_page(), make_page()],
+            pages=[make_page(), make_page(), make_page("contact")],
             global_functional_requirements=["Responsive navigation"],
         )
 
@@ -61,7 +65,7 @@ def test_wireframe_rejects_navigation_to_unknown_page():
         WireframeOutput(
             website_goal="Generate qualified enquiries for the business.",
             navigation=[NavigationItem(label="About", page_slug="about")],
-            pages=[make_page()],
+            pages=[make_page(), make_page("services"), make_page("contact")],
             global_functional_requirements=["Responsive navigation"],
         )
 
@@ -69,8 +73,12 @@ def test_wireframe_rejects_navigation_to_unknown_page():
 def test_wireframe_accepts_valid_homepage_and_navigation():
     result = WireframeOutput(
         website_goal="Generate qualified enquiries for the business.",
-        navigation=[NavigationItem(label="Home", page_slug="home")],
-        pages=[make_page()],
+        navigation=[
+            NavigationItem(label="Home", page_slug="home"),
+            NavigationItem(label="Services", page_slug="services"),
+            NavigationItem(label="Contact", page_slug="contact"),
+        ],
+        pages=[make_page(), make_page("services"), make_page("contact")],
         global_functional_requirements=["Responsive navigation"],
     )
 
